@@ -14,7 +14,7 @@ pub fn parse_html(source_str: String) -> RcDom {
         .unwrap()
 }
 
-pub fn get_urls(handle: Handle) -> Vec<String> {
+pub fn get_links(handle: Handle) -> Vec<String> {
     let mut urls = vec![];
 
     let mut anchor_tags = vec![];
