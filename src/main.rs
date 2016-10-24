@@ -1,30 +1,22 @@
-extern crate html5ever;
 extern crate hyper;
-extern crate tendril;
 
 use std::env;
-use std::io::Read;
-use hyper::Client;
 
-use html5ever::tokenizer::Attribute;
-use html5ever::driver;
-use html5ever::rcdom::{Element, ElementEnum, Handle, NodeEnum, RcDom};
+use self::hyper::Client;
 
-use tendril::TendrilSink;
+mod fetching;
+mod parsing;
+
+use fetching::fetch_url;
+use parsing::{get_urls, parse_html};
 
 fn main() {
     let client = Client::new();
     let args = env::args().collect();
     let url = parse_cl_args(&args);
-    let mut response = match client.get(url).send() {
-        Ok(response) => response,
-        Err(_) => panic!("Error getting {}", url),
-    };
-    let mut buf = String::new();
-    match response.read_to_string(&mut buf) {
-        Ok(_) => (),
-        Err(_) => panic!("Error reading response from {}", url),
-    };
+
+    let buf = fetch_url(&client, url);
+
     let dom = parse_html(buf);
 
     let urls = get_urls(dom.document);
@@ -43,45 +35,4 @@ fn parse_cl_args(args: &Vec<String>) -> &String {
     }
 
     return &args[1];
-}
-
-fn parse_html(source_str: String) -> RcDom {
-    driver::parse_document(RcDom::default(), Default::default())
-        .from_utf8()
-        .read_from(&mut source_str.as_bytes())
-        .unwrap()
-}
-
-fn get_urls(handle: Handle) -> Vec<String> {
-    let mut urls = vec![];
-
-    let mut anchor_tags = vec![];
-    get_elements_by_name(handle, "a", &mut anchor_tags);
-
-    for node in anchor_tags {
-        if let Element(_, _, ref attrs) = node {
-            for attr in attrs.iter() {
-                let Attribute { ref name, ref value } = *attr;
-                if &name.local == "href" {
-                    urls.push(value.to_string());
-                }
-            }
-        }
-    }
-
-    urls
-}
-
-fn get_elements_by_name(handle: Handle, element_name: &str, out: &mut Vec<NodeEnum>) {
-    let node = handle.borrow();
-
-    if let Element(ref name, _, ref attrs) = node.node {
-        if &name.local == element_name {
-            out.push(Element(name.clone(), ElementEnum::Normal, attrs.clone()));
-        }
-    }
-
-    for child in &node.children {
-        get_elements_by_name(child.clone(), element_name, out);
-    }
 }
