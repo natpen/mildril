@@ -66,8 +66,13 @@ fn parse_cl_args(args: &Vec<String>) -> HashMap<&str, &String> {
 
 fn crawl(client: &Client, urls: &Vec<String>, mut visited_urls: &mut HashSet<String>) {
     for url in urls {
-        // TODO: add standardized url to hash_set
-        visited_urls.insert(url.to_string());
+        match Url::parse(&url) {
+            Ok(parsed_url) => {
+                visited_urls.insert(parsed_url.into_string());
+                ()
+            }
+            Err(_) => (),
+        }
     }
     for url in urls {
         let buf = fetch_url(&client, url);
@@ -75,10 +80,9 @@ fn crawl(client: &Client, urls: &Vec<String>, mut visited_urls: &mut HashSet<Str
         let links = get_links(dom.document);
         let mut unique_links: HashSet<String> = HashSet::new();
         for link in links {
-            // TODO: add standardized url to hash_set
             match Url::parse(&link) {
-                Ok(_) => {
-                    unique_links.insert(link);
+                Ok(url) => {
+                    unique_links.insert(url.into_string());
                     ()
                 }
                 Err(_) => (),
@@ -91,9 +95,10 @@ fn crawl(client: &Client, urls: &Vec<String>, mut visited_urls: &mut HashSet<Str
             }
             links.push(link.to_string());
         }
-        println!("{url} ({new_links_count} new urls found)",
+        println!("{url} | {new_links_count} | {total_links_count}",
                  url = url,
-                 new_links_count = &links.len());
+                 new_links_count = &links.len(),
+                 total_links_count = &unique_links.len());
         crawl(&client, &links, &mut visited_urls);
     }
 }
