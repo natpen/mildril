@@ -1,27 +1,17 @@
 extern crate hyper;
+#[macro_use]
+extern crate lazy_static;
+
+use self::hyper::Client;
 
 use std::env;
 use std::collections::{HashMap, HashSet};
-
-use self::hyper::Client;
 
 mod crawling;
 mod fetching;
 mod parsing;
 
 use crawling::crawl;
-
-const BLACKLISTED_DOMAINS: [&'static str; 11] = ["twitter.com",
-                                                 "www.twitter.com",
-                                                 "support.twitter.com",
-                                                 "t.co",
-                                                 "github.com",
-                                                 "facebook.com",
-                                                 "www.facebook.com",
-                                                 "play.google.com",
-                                                 "instagram.com",
-                                                 "www.tumblr.com",
-                                                 "t.umblr.com"];
 
 fn main() {
     let mut starting_urls: Vec<String> = vec![];
@@ -38,17 +28,7 @@ fn main() {
     }
     let client = Client::new();
     let mut visited_urls: HashSet<String> = HashSet::new();
-    let domain_blacklist: HashSet<&str> = {
-        let mut h: HashSet<&str> = HashSet::new();
-        for d in BLACKLISTED_DOMAINS.iter() {
-            h.insert(d);
-        }
-        h
-    };
-    crawl(&client,
-          &starting_urls,
-          &mut visited_urls,
-          &domain_blacklist);
+    crawl(&client, &starting_urls, &mut visited_urls);
 }
 
 fn parse_cl_args(args: &Vec<String>) -> HashMap<&str, &String> {

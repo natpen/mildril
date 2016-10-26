@@ -6,5 +6,6 @@ authors = ["Natalie Pendragon <natalie.pendragon@gmail.com>"]
 [dependencies]
 html5ever = "0.7.0"
 hyper = "0.9.10"
+lazy_static = "0.2.1"
 tendril = "0.2.3"
 url = "1.2.2"

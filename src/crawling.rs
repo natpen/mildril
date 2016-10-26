@@ -1,3 +1,24 @@
+lazy_static! {
+    static ref BLACKLISTED_DOMAINS: HashSet<&'static str> = {
+        let mut h = HashSet::new();
+        h.insert("www.twitter.com");
+        h.insert("support.twitter.com");
+        h.insert("t.co");
+        h.insert("github.com");
+        h.insert("facebook.com");
+        h.insert("l.facebook.com");
+        h.insert("www.facebook.com");
+        h.insert("play.google.com");
+        h.insert("instagram.com");
+        h.insert("www.instagram.com");
+        h.insert("pinterest.com");
+        h.insert("www.pinterest.com");
+        h.insert("www.tumblr.com");
+        h.insert("t.umblr.com");
+        h
+    };
+}
+
 extern crate hyper;
 extern crate url;
 
@@ -10,10 +31,7 @@ use self::url::Url;
 use fetching::fetch_url;
 use parsing::{get_links, parse_html};
 
-pub fn crawl(client: &Client,
-             urls: &Vec<String>,
-             mut visited_urls: &mut HashSet<String>,
-             domain_blacklist: &HashSet<&str>) {
+pub fn crawl(client: &Client, urls: &Vec<String>, mut visited_urls: &mut HashSet<String>) {
     for url in urls {
         match Url::parse(&url) {
             Ok(parsed_url) => {
@@ -35,7 +53,7 @@ pub fn crawl(client: &Client,
                 Ok(url) => {
                     let url_ref = &url;
                     let domain = url_ref.domain().unwrap_or("");
-                    if !domain_blacklist.contains(domain) {
+                    if !BLACKLISTED_DOMAINS.contains(domain) {
                         unique_links.insert(url_ref.to_string());
                     }
                     ()
@@ -54,6 +72,6 @@ pub fn crawl(client: &Client,
                  url = url,
                  new_links_count = &links.len(),
                  total_links_count = &unique_links.len());
-        crawl(&client, &links, &mut visited_urls, &domain_blacklist);
+        crawl(&client, &links, &mut visited_urls);
     }
 }
